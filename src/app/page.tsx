@@ -1,131 +1,23 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
 import { Mic, MicOff, Send } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import useHome from "./useHome";
 
 export default function Home() {
-  const [isListening, setIsListening] = useState(false);
-  const [transcript, setTranscript] = useState("");
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSpeechRef = useRef<number>(Date.now());
-
-  // Scroll to bottom whenever messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    if (transcript) {
-      handleInputChange({
-        target: { value: transcript },
-      } as React.ChangeEvent<HTMLTextAreaElement>);
-      // Update last speech timestamp when transcript changes
-      lastSpeechRef.current = Date.now();
-    }
-  }, [transcript, handleInputChange]);
-
-  // Cleanup timer on unmount
-  useEffect(() => {
-    return () => {
-      if (silenceTimerRef.current) {
-        clearInterval(silenceTimerRef.current);
-      }
-      stopListening();
-    };
-  }, []);
-
-  const toggleListening = () => {
-    if (!isListening) {
-      startListening();
-    } else {
-      stopListening();
-    }
-  };
-
-  const startListening = () => {
-    if ("webkitSpeechRecognition" in window) {
-      const recognition = new (window as any).webkitSpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-        lastSpeechRef.current = Date.now();
-
-        // Start silence detection - check every second if user has stopped speaking
-        silenceTimerRef.current = setInterval(() => {
-          const timeSinceLastSpeech = Date.now() - lastSpeechRef.current;
-          // If no speech detected for 2 seconds, stop listening
-          if (timeSinceLastSpeech > 2000) {
-            stopListening();
-          }
-        }, 1000);
-      };
-
-      recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
-          .map((result: any) => result[0])
-          .map((result: any) => result.transcript)
-          .join("");
-        setTranscript(transcript);
-        // Update last speech timestamp
-        lastSpeechRef.current = Date.now();
-      };
-
-      recognition.onerror = (event: any) => {
-        console.error(event.error);
-        setIsListening(false);
-        if (silenceTimerRef.current) {
-          clearInterval(silenceTimerRef.current);
-          silenceTimerRef.current = null;
-        }
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-        if (silenceTimerRef.current) {
-          clearInterval(silenceTimerRef.current);
-          silenceTimerRef.current = null;
-        }
-      };
-
-      recognition.start();
-      (window as any).recognition = recognition;
-    } else {
-      alert("Speech recognition is not supported in this browser.");
-    }
-  };
-
-  const stopListening = () => {
-    if ((window as any).recognition) {
-      (window as any).recognition.stop();
-    }
-
-    if (silenceTimerRef.current) {
-      clearInterval(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
-  };
-
-  // Manual input handler
-  const onManualInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    handleInputChange(e);
-    // Clear transcript when manually typing
-    if (e.target.value !== transcript) {
-      setTranscript("");
-    }
-  };
+  const {
+    isListening,
+    input,
+    messages,
+    isLoading,
+    handleSubmit,
+    toggleListening,
+    onManualInputChange,
+    messagesEndRef,
+  } = useHome();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 p-4">
@@ -149,7 +41,6 @@ export default function Home() {
                   <p>{message.content}</p>
                 </div>
               ))}
-              {/* Invisible element to scroll to */}
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
@@ -162,6 +53,7 @@ export default function Home() {
                 placeholder="Type your message or click the mic to speak..."
                 className="flex-1"
                 rows={3}
+                disabled={isLoading}
               />
               <div className="flex flex-col gap-2">
                 <Button
@@ -181,6 +73,7 @@ export default function Home() {
                   type="submit"
                   className="h-12 w-12 p-2"
                   title="Send message"
+                  disabled={isLoading}
                 >
                   <Send className="h-6 w-6" />
                 </Button>
