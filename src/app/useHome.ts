@@ -26,7 +26,8 @@ const useHome = () => {
 
   useEffect(() => {
     if (transcript) {
-      setInput(transcript);
+      // Remove newlines from transcript
+      setInput(transcript.replace(/\n/g, " "));
       lastSpeechRef.current = Date.now();
     }
   }, [transcript]);
@@ -65,7 +66,8 @@ const useHome = () => {
         const transcript = Array.from(event.results)
           .map((result: any) => result[0])
           .map((result: any) => result.transcript)
-          .join("");
+          .join("")
+          .replace(/\n/g, " "); // Remove any newlines
         setTranscript(transcript);
         lastSpeechRef.current = Date.now();
       };
@@ -97,7 +99,9 @@ const useHome = () => {
     }
   };
 
-  const onManualInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const onManualInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setInput(e.target.value);
     if (e.target.value !== transcript) setTranscript("");
   };
@@ -125,7 +129,6 @@ const useHome = () => {
       });
 
       const data = await response.json();
-      console.log("data", data);
       const reply: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
