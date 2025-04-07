@@ -1,3 +1,4 @@
+import { useTheme } from "next-themes";
 import React, { useEffect, useRef, useState } from "react";
 
 type Message = {
@@ -15,6 +16,28 @@ const useHome = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeechRef = useRef<number>(Date.now());
+
+  const { setTheme, theme } = useTheme();
+  console.log("theme", theme);
+  const [mounted, setMounted] = useState(false);
+
+  // Set dark theme as default and handle hydration
+  useEffect(() => {
+    setMounted(true);
+    setTheme("dark");
+  }, [setTheme]);
+
+  // Ensure input is always on one line by replacing newline characters
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\n/g, " ");
+    const event = { ...e, target: { ...e.target, value } };
+    onManualInputChange(event as any);
+  };
+
+  // Handle clicking on example prompt
+  const handleExamplePromptClick = (prompt: string) => {
+    setInput(prompt);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,6 +152,7 @@ const useHome = () => {
       });
 
       const data = await response.json();
+
       const reply: Message = {
         id: crypto.randomUUID(),
         role: "assistant",
@@ -153,15 +177,16 @@ const useHome = () => {
 
   return {
     isListening,
-    transcript,
     input,
     messages,
     isLoading,
-    toggleListening,
-    onManualInputChange,
     handleSubmit,
-    scrollToBottom,
+    toggleListening,
     messagesEndRef,
+    handleExamplePromptClick,
+    handleInputChange,
+    mounted,
+    setTheme,
   };
 };
 

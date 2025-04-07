@@ -1,19 +1,35 @@
 "use client";
 
-import { Mic, MicOff, Send, Sun, User, Bot } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  Send,
+  Sun,
+  User,
+  Bot,
+  Lightbulb,
+  ArrowRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import useHome from "./useHome";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+
+// Example prompts that users can click on
+const EXAMPLE_PROMPTS = [
+  { text: "Tell me a joke", icon: "😂" },
+  { text: "What's the 200 + 320?", icon: "➗" },
+  { text: "Write a short poem", icon: "📝" },
+  { text: "Give me a fun fact", icon: "🧠" },
+];
 
 export default function Home() {
   const {
@@ -23,25 +39,11 @@ export default function Home() {
     isLoading,
     handleSubmit,
     toggleListening,
-    onManualInputChange,
     messagesEndRef,
+    handleExamplePromptClick,
+    handleInputChange,
+    setTheme,
   } = useHome();
-
-  const { setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  // Set dark theme as default and handle hydration
-  useEffect(() => {
-    setMounted(true);
-    setTheme("dark");
-  }, [setTheme]);
-
-  // Ensure input is always on one line by replacing newline characters
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\n/g, " ");
-    const event = { ...e, target: { ...e.target, value } };
-    onManualInputChange(event as any);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 to-slate-800 dark:from-slate-950 dark:to-slate-900 p-4 transition-all duration-300">
@@ -52,44 +54,66 @@ export default function Home() {
               Voice-Enabled AI Chat
             </h1>
 
-            {mounted && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() =>
-                        setTheme((theme) =>
-                          theme === "dark" ? "light" : "dark"
-                        )
-                      }
-                      className="rounded-full h-10 w-10 text-slate-300 hover:text-yellow-400 hover:bg-slate-700/50"
-                    >
-                      <Sun className="h-5 w-5" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Toggle theme</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      setTheme((theme) => (theme === "dark" ? "light" : "dark"))
+                    }
+                    className="rounded-full h-10 w-10 text-slate-300 hover:text-yellow-400 hover:bg-slate-700/50"
+                  >
+                    <Sun className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Toggle theme</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
 
           <ScrollArea className="h-[500px] mb-6 p-4 rounded-lg border border-slate-700 bg-slate-800/30 dark:bg-slate-950/50 shadow-inner">
             <div className="space-y-6">
               {messages.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-64 text-center text-slate-500">
-                  <div className="h-16 w-16 mb-4 rounded-full bg-slate-800/70 flex items-center justify-center">
-                    <Bot className="h-8 w-8 text-blue-400/70" />
+                <div className="space-y-6">
+                  <div className="flex flex-col items-center justify-center h-48 text-center text-slate-500">
+                    <div className="h-16 w-16 mb-4 rounded-full bg-slate-800/70 flex items-center justify-center">
+                      <Bot className="h-8 w-8 text-blue-400/70" />
+                    </div>
+                    <p className="text-lg font-medium text-slate-400">
+                      Start a conversation
+                    </p>
+                    <p className="text-sm mt-2">
+                      Select a suggestion below or type your own message
+                    </p>
                   </div>
-                  <p className="text-lg font-medium text-slate-400">
-                    Start a conversation
-                  </p>
-                  <p className="text-sm mt-2">
-                    Use the microphone button or type your message below
-                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {EXAMPLE_PROMPTS.map((prompt, index) => (
+                      <button
+                        key={index}
+                        onClick={() => handleExamplePromptClick(prompt.text)}
+                        className="p-4 text-left rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-700/70 transition-colors group flex items-center justify-between"
+                      >
+                        <div className="flex items-center">
+                          <span className="text-xl mr-3">{prompt.icon}</span>
+                          <span className="text-slate-300">{prompt.text}</span>
+                        </div>
+                        <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-blue-400 transition-colors opacity-0 group-hover:opacity-100" />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-800/50 border border-slate-700/50">
+                    <Lightbulb className="h-5 w-5 text-amber-400" />
+                    <p className="text-sm text-slate-400">
+                      You can also use the microphone button to speak your
+                      message
+                    </p>
+                  </div>
                 </div>
               )}
               {messages.map((message) => (
@@ -122,8 +146,8 @@ export default function Home() {
                   >
                     <p className="whitespace-pre-wrap">{message.content}</p>
                     <span
-                      className={`absolute bottom-[12px] ${
-                        message.role === "assistant" ? "-left-2" : "-right-2"
+                      className={`absolute top-[12px] ${
+                        message.role === "assistant" ? "-left-1" : "-right-1"
                       } h-4 w-4 transform ${
                         message.role === "assistant"
                           ? "bg-slate-800 dark:bg-slate-800/80"
