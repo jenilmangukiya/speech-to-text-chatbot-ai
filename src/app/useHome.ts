@@ -17,7 +17,7 @@ const useHome = () => {
   const lastSpeechRef = useRef<number>(Date.now());
   const ref = useRef("");
 
-  const { setTheme, theme } = useTheme();
+  const { setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Set dark theme as default and handle hydration
