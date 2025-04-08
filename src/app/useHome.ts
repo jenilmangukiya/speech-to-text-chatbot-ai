@@ -1,4 +1,5 @@
-import { useTheme } from "next-themes";
+"use client";
+
 import React, { useEffect, useRef, useState } from "react";
 
 type Message = {
@@ -16,15 +17,14 @@ const useHome = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSpeechRef = useRef<number>(Date.now());
   const ref = useRef("");
+  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
 
-  const { setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  // Set dark theme as default and handle hydration
   useEffect(() => {
-    setMounted(true);
-    setTheme("dark");
-  }, [setTheme]);
+    const isDark = document.documentElement.classList.contains("dark");
+    setTheme(isDark ? "dark" : "light");
+  }, []);
+
+  const isDarkMode = theme === "dark";
 
   // Ensure input is always on one line by replacing newline characters
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,8 +193,7 @@ const useHome = () => {
     messagesEndRef,
     handleExamplePromptClick,
     handleInputChange,
-    mounted,
-    setTheme,
+    isDarkMode,
   };
 };
 
