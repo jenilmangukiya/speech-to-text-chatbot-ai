@@ -38,6 +38,7 @@ export default function Home() {
     messages,
     isLoading,
     handleSubmit,
+    handleKeyDown,
     toggleListening,
     messagesEndRef,
     handleExamplePromptClick,
@@ -161,22 +162,24 @@ export default function Home() {
             </div>
           </ScrollArea>
 
-          <form onSubmit={handleSubmit} className="relative">
+          <div className="relative">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Input
                   value={input}
                   onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
                   placeholder="Type your message or click the mic to speak..."
                   className="pr-12 py-6 bg-slate-800/50 dark:bg-slate-800/30 border-slate-700 rounded-full text-slate-200 placeholder:text-slate-500"
                   disabled={isLoading}
                 />
 
                 <Button
-                  type="submit"
+                  type="button"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-9 w-9 p-0 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 shadow-md disabled:opacity-50"
                   title="Send message"
                   disabled={isLoading || !input.trim()}
+                  onClick={handleSubmit}
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -234,7 +237,7 @@ export default function Home() {
                 </div>
               </div>
             )}
-          </form>
+          </div>
         </Card>
       </div>
     </div>

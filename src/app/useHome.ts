@@ -14,11 +14,10 @@ const useHome = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSpeechRef = useRef<number>(Date.now());
+  const ref = useRef("");
 
   const { setTheme, theme } = useTheme();
-  console.log("theme", theme);
   const [mounted, setMounted] = useState(false);
 
   // Set dark theme as default and handle hydration
@@ -32,6 +31,12 @@ const useHome = () => {
     const value = e.target.value.replace(/\n/g, " ");
     const event = { ...e, target: { ...e.target, value } };
     onManualInputChange(event as any);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSubmit();
+    }
   };
 
   // Handle clicking on example prompt
@@ -51,16 +56,10 @@ const useHome = () => {
     if (transcript) {
       // Remove newlines from transcript
       setInput(transcript.replace(/\n/g, " "));
+      ref.current = transcript.replace(/\n/g, " ");
       lastSpeechRef.current = Date.now();
     }
   }, [transcript]);
-
-  useEffect(() => {
-    return () => {
-      if (silenceTimerRef.current) clearInterval(silenceTimerRef.current);
-      stopListening();
-    };
-  }, []);
 
   const toggleListening = () => {
     if (isListening) {
@@ -71,37 +70,42 @@ const useHome = () => {
   };
 
   const startListening = () => {
-    if ("webkitSpeechRecognition" in window) {
-      const recognition = new (window as any).webkitSpeechRecognition();
-      recognition.continuous = true;
+    // Check for both standard and webkit implementations
+    if ("SpeechRecognition" in window || "webkitSpeechRecognition" in window) {
+      // Use the appropriate API
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
+      const recognition = new SpeechRecognition();
+
+      // Set to false to automatically stop after silence is detected
+      recognition.continuous = false;
       recognition.interimResults = true;
 
       recognition.onstart = () => {
         setIsListening(true);
         lastSpeechRef.current = Date.now();
-        silenceTimerRef.current = setInterval(() => {
-          const timeSinceLastSpeech = Date.now() - lastSpeechRef.current;
-          if (timeSinceLastSpeech > 2000) stopListening();
-        }, 1000);
       };
 
       recognition.onresult = (event: any) => {
-        const transcript = Array.from(event.results)
+        const transcriptt = Array.from(event.results)
           .map((result: any) => result[0])
           .map((result: any) => result.transcript)
           .join("")
           .replace(/\n/g, " "); // Remove any newlines
-        setTranscript(transcript);
+        setTranscript(transcriptt);
         lastSpeechRef.current = Date.now();
       };
 
       recognition.onerror = (event: any) => {
         console.error(event.error);
-        stopListening();
+        setIsListening(false);
       };
 
       recognition.onend = () => {
-        stopListening();
+        setIsListening(false);
+        submitMessage(ref?.current);
       };
 
       recognition.start();
@@ -116,10 +120,7 @@ const useHome = () => {
       (window as any).recognition.stop();
     }
     setIsListening(false);
-    if (silenceTimerRef.current) {
-      clearInterval(silenceTimerRef.current);
-      silenceTimerRef.current = null;
-    }
+    handleSubmit();
   };
 
   const onManualInputChange = (
@@ -129,19 +130,20 @@ const useHome = () => {
     if (e.target.value !== transcript) setTranscript("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  // New helper function to handle submission with a given message
+  const submitMessage = async (messageContent: string) => {
+    if (!messageContent) return;
 
     const newMessage: Message = {
       id: crypto.randomUUID(),
       role: "user",
-      content: input.trim(),
+      content: messageContent,
     };
 
     const updatedMessages = [...messages, newMessage];
     setMessages(updatedMessages);
     setInput("");
+    setTranscript("");
     setIsLoading(true);
 
     try {
@@ -175,12 +177,18 @@ const useHome = () => {
     }
   };
 
+  // Update the original handleSubmit to use the new helper
+  const handleSubmit = () => {
+    submitMessage(input.trim());
+  };
+
   return {
     isListening,
     input,
     messages,
     isLoading,
     handleSubmit,
+    handleKeyDown,
     toggleListening,
     messagesEndRef,
     handleExamplePromptClick,
