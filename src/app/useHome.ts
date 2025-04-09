@@ -208,7 +208,7 @@ const useHome = () => {
 
       // Role-specific styling
       const isUser = msg.role === "user";
-      const label = isUser ? "User:" : "AI Assistant:";
+      const label = isUser ? "User:" : "SpeechiFy:";
 
       // Set text styles
       doc.setFont("helvetica", "bold");

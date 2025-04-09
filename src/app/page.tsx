@@ -55,7 +55,7 @@ export default function Home() {
         <Card className="p-6 shadow-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm border border-slate-200 dark:border-slate-700">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Voice-Enabled AI Chat
+              SpeechiFy
             </h1>
 
             <div className="flex items-center gap-2">

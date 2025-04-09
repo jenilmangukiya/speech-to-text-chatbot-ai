@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     const result = await generateText({
-      model: openai("gpt-3.5-turbo"),
+      model: openai("gpt-4o"),
       system: "You are a helpful assistant.",
       messages,
     });
