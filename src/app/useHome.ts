@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { jsPDF } from "jspdf";
 
 type Message = {
   id: string;
@@ -182,6 +183,68 @@ const useHome = () => {
     submitMessage(input.trim());
   };
 
+  const handleDownloadChat = () => {
+    const doc = new jsPDF();
+    let y = 20;
+
+    // Title
+    doc.setFontSize(18);
+    doc.setTextColor(40, 40, 40);
+    doc.setFont("helvetica", "bold"); // <-- Make title bold
+    doc.text("Chat Conversation", 105, y, { align: "center" });
+
+    y += 10;
+    doc.setLineWidth(0.5);
+    doc.line(10, y, 200, y); // horizontal line under title
+    y += 10;
+
+    // Loop through messages
+    messages.forEach((msg) => {
+      // Handle page break
+      if (y > 270) {
+        doc.addPage();
+        y = 20;
+      }
+
+      // Role-specific styling
+      const isUser = msg.role === "user";
+      const label = isUser ? "User:" : "AI Assistant:";
+
+      // Set text styles
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(12);
+      // doc.setTextColor(isUser ? 0 : 56, isUser ? 0 : 102, isUser ? 255 : 153); // Blue for user, dark greenish for assistant
+      doc.setTextColor(
+        isUser ? 51 : 34, // Red: Blue gray for user, emerald green for assistant
+        isUser ? 102 : 153, // Green
+        isUser ? 204 : 84 // Blue
+      );
+      doc.text(label, 10, y);
+
+      // Set content style
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(50, 50, 50);
+
+      const contentLines = doc.splitTextToSize(msg.content, 180);
+      y += 6;
+
+      contentLines.forEach((line: any) => {
+        if (y > 280) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.text(line, 14, y);
+        y += 6;
+      });
+
+      y += 8; // Extra space after each message
+    });
+
+    // Save the PDF
+    doc.save("chat-history.pdf");
+  };
+
   return {
     isListening,
     input,
@@ -194,6 +257,7 @@ const useHome = () => {
     handleExamplePromptClick,
     handleInputChange,
     isDarkMode,
+    handleDownloadChat,
   };
 };
 
